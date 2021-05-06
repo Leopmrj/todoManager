@@ -33,14 +33,25 @@ function checksExistsUserAccount(request, response, next) {
 
 app.post('/users', (request, response) => {
 	const {name, username} = request.body;
-	users.push({
+
+	const user = users.find(
+		(userEl) => userEl.username === username
+	);
+
+	if(user){
+		return response.status(400).json({error: `User ${username} already exists!`})
+	};
+
+	const newUser = {
 		id: uuidv4(),
 		name,
 		username,
 		todos: [],
-	});
+	};
 
-	return response.status(201).send();
+	users.push(newUser);
+
+	return response.json(newUser);
 
 });
 
@@ -57,13 +68,14 @@ app.post('/todos', checksExistsUserAccount, (request, response) => {
 		id: uuidv4(),
 		title,
 		done: false,
-		deadline: new Date(deadline),
+		// deadline: new Date(deadline),
+		deadline: deadline,
 		created_at: new Date(),
 	};
 
 	user.todos.push(newTodo);
 
-	response.status(201).send();
+	response.status(201).json(newTodo);
 
 });
 
@@ -78,13 +90,13 @@ app.put('/todos/:id', checksExistsUserAccount, (request, response) => {
 	);
 
 	if(todoIndex === -1){
-		return response.status(401).json({error: `Todo id ${id} not found!`})
+		return response.status(404).json({error: `Todo id ${id} not found!`})
 	}
 
 	users[userIndex].todos[todoIndex].title = title;
 	users[userIndex].todos[todoIndex].deadline = new Date(deadline);
 
-	response.status(201).send();
+	response.status(201).json(users[userIndex].todos[todoIndex]);
 
 });
 
@@ -97,12 +109,12 @@ app.patch('/todos/:id/done', checksExistsUserAccount, (request, response) => {
 	);
 
 	if(todoIndex === -1){
-		return response.status(401).json({error: `Todo id ${id} not found!`})
+		return response.status(404).json({error: `Todo id ${id} not found!`})
 	};
 
 	users[userIndex].todos[todoIndex].done = true;
 
-	response.status(201).send();
+	response.status(201).json(users[userIndex].todos[todoIndex]);
 
 });
 
@@ -115,12 +127,12 @@ app.delete('/todos/:id', checksExistsUserAccount, (request, response) => {
 	);
 
 	if(todoIndex === -1){
-		return response.status(401).json({error: `Todo id ${id} not found!`})
+		return response.status(404).json({error: `Todo id ${id} not found!`})
 	}
 
 	users[userIndex].todos.splice(todoIndex, 1);
 
-	return response.status(201).send();
+	return response.status(204).send();
 
 });
 
